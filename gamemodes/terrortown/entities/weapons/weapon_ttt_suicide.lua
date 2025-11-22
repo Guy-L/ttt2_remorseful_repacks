@@ -35,6 +35,8 @@ SWEP.IsSilent = false
 SWEP.NoSights = true
 SWEP.FlukeChance = 0.03
 
+CreateConVar("ttt_suicide_always_kill_user", 0, {FCVAR_ARCHIVE})
+
 function SWEP:SetupDataTables()
     self:NetworkVar("Bool", 0, "Fluke")
 end
@@ -77,17 +79,27 @@ function SWEP:PrimaryAttack()
 end
 
 function SWEP:Explode()
-    if not IsValid(self:GetOwner()) then
+    local ply = self:GetOwner()
+    if not IsValid(ply) then
         self:Remove()
         return
     end
     local ent = ents.Create("env_explosion")
-    ent:SetPos(self:GetOwner():GetPos())
-    ent:SetOwner(self:GetOwner())
+    ent:SetPos(ply:GetPos())
+    ent:SetOwner(ply)
     ent:SetKeyValue("iMagnitude", "200")
     ent:Spawn()
     ent:Fire("Explode", 0, 0)
     ent:EmitSound("weapons/weapon_ttt_suicide/boom" .. (self:GetFluke() and "2" or "") .. ".wav")
+    if GetConVar("ttt_suicide_always_kill_user"):GetBool() then
+        -- attempt to kill user next think if the explosion didnt kill
+        timer.Simple(1/100, function()
+            if not IsValid(ply) or not ply:Alive() then
+                return
+            end
+            ply:TakeDamage(2^15-1, ply)
+        end)
+    end
     self:Remove()
 end
 
