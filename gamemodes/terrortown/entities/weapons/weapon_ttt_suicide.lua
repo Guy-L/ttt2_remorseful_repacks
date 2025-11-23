@@ -53,6 +53,8 @@ function SWEP:Reload() end
 function SWEP:Initialize()
     if SERVER then
         self:SetFluke(false)
+    elseif CLIENT then
+        self:AddTTT2HUDHelp("suicide_instruction")
     end
 end
 
