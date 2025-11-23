@@ -3,6 +3,7 @@ AddCSLuaFile()
 local EXTRA_USER_DMG = CreateConVar("ttt_suicide_user_dmg", 200, {FCVAR_ARCHIVE}, "How much extra damage to deal to a user if they weren't killed by the blast",  0)
 local FLUKE_CHANCE = CreateConVar("ttt_suicide_alt_sfx_chance", 0.03, {FCVAR_ARCHIVE}, "Chance to play the alternative blowing sound.", 0, 1)
 local EXPLOSION_MAGNITUDE = CreateConVar("ttt_suicide_magnitude", 200, {FCVAR_ARCHIVE}, "Effective radius of the bomb", 0)
+local PAP_RESIST_PERCENT = CreateConVar("ttt_suicide_pap_resist", 100, {FCVAR_ARCHIVE}, "Explosion damage resisted with PaP (%)", 0, 100)
 
 if CLIENT then
     SWEP.PrintName = "Suicide Bomb"
@@ -87,6 +88,18 @@ function SWEP:Explode()
         self:Remove()
         return
     end
+
+    local papResistHook = "pap_suicide_resist" .. ply:Nick()
+    if SERVER and self.Packed then
+        -- prevent PaP'd suicide bomb from damaging user
+        hook.Add("EntityTakeDamage", papResistHook, function(target, dmginfo)
+            if target == ply then
+                dmginfo:ScaleDamage(1 - (PAP_RESIST_PERCENT:GetFloat()/100))
+                hook.Remove("EntityTakeDamage", papResistHook)
+            end
+        end)
+    end
+
     local ent = ents.Create("env_explosion")
     ent:SetPos(ply:GetPos())
     ent:SetOwner(ply)
@@ -96,7 +109,13 @@ function SWEP:Explode()
     ent:EmitSound("weapons/weapon_ttt_suicide/boom" .. (self:GetFluke() and "2" or "") .. ".wav")
 
     local extraDmg = EXTRA_USER_DMG:GetFloat()
-    if extraDmg > 0 then
+    if self.Packed then
+        -- ensure explosion resist gets removed from user if it somehow didn't proc
+        timer.Simple(3, function()
+            hook.Remove("EntityTakeDamage", papResistHook)
+        end)
+
+    elseif extraDmg > 0 then
         -- hurt/kill the user next think if the explosion didnt kill
         local displayCopy = ents.Create("weapon_ttt_suicide") --for body search; sucks but will be cleaned up
 
@@ -137,6 +156,22 @@ function SWEP:AddToSettingsMenu(parent)
         min = 0,
         max = 1,
         decimal = 2
+    })
+
+    local formPaP = vgui.CreateTTT2Form(parent, "label_suicide_pap_form")
+    formPaP:MakeHelp({
+        label = "label_suicide_pap_resist_desc"
+    })
+    formPaP:MakeSlider({
+        serverConvar = "ttt_suicide_pap_resist",
+        label = "label_suicide_pap_resist",
+        min = 0,
+        max = 100,
+        decimal = 0
+    })
+    formPaP:MakeCheckBox({
+        serverConvar = "ttt_suicide_pap_john",
+        label = "label_suicide_pap_john"
     })
 end
 
