@@ -3,6 +3,7 @@ AddCSLuaFile()
 local EXTRA_USER_DMG = CreateConVar("ttt_suicide_user_dmg", 200, {FCVAR_ARCHIVE}, "How much extra damage to deal to a user if they weren't killed by the blast",  0)
 local FLUKE_CHANCE = CreateConVar("ttt_suicide_alt_sfx_chance", 3, {FCVAR_ARCHIVE}, "Chance to play the alternative blowing sound (%)", 0, 100)
 local EXPLOSION_MAGNITUDE = CreateConVar("ttt_suicide_magnitude", 200, {FCVAR_ARCHIVE}, "Effective radius of the bomb", 0)
+local EXPLOSION_DELAY = CreateConVar("ttt_suicide_delay", 1.72, {FCVAR_ARCHIVE}, "Delay before explosion in seconds", 0)
 local PAP_RESIST_PERCENT = CreateConVar("ttt_suicide_pap_resist", 100, {FCVAR_ARCHIVE}, "Explosion damage resisted with PaP (%)", 0, 100)
 
 if CLIENT then
@@ -75,7 +76,7 @@ function SWEP:PrimaryAttack()
     end
 
     if SERVER then
-        timer.Simple(1.72, function()
+        timer.Simple(EXPLOSION_DELAY:GetFloat(), function()
             self:Explode()
         end)
         self:GetOwner():EmitSound("weapons/weapon_ttt_suicide/bouta_blow" .. (self:GetFluke() and "2" or "") .. ".wav")
@@ -149,6 +150,13 @@ function SWEP:AddToSettingsMenu(parent)
         min = 0,
         max = 1000,
         decimal = 0
+    })
+    formMain:MakeSlider({
+        serverConvar = "ttt_suicide_delay",
+        label = "label_suicide_delay",
+        min = 0,
+        max = 5,
+        decimal = 2
     })
     formMain:MakeSlider({
         serverConvar = "ttt_suicide_alt_sfx_chance",
