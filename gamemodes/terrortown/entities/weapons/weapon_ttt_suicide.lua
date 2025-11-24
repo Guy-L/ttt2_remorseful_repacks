@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 local EXTRA_USER_DMG = CreateConVar("ttt_suicide_user_dmg", 200, {FCVAR_ARCHIVE}, "How much extra damage to deal to a user if they weren't killed by the blast",  0)
-local FLUKE_CHANCE = CreateConVar("ttt_suicide_alt_sfx_chance", 0.03, {FCVAR_ARCHIVE}, "Chance to play the alternative blowing sound.", 0, 1)
+local FLUKE_CHANCE = CreateConVar("ttt_suicide_alt_sfx_chance", 3, {FCVAR_ARCHIVE}, "Chance to play the alternative blowing sound (%)", 0, 100)
 local EXPLOSION_MAGNITUDE = CreateConVar("ttt_suicide_magnitude", 200, {FCVAR_ARCHIVE}, "Effective radius of the bomb", 0)
 local PAP_RESIST_PERCENT = CreateConVar("ttt_suicide_pap_resist", 100, {FCVAR_ARCHIVE}, "Explosion damage resisted with PaP (%)", 0, 100)
 
@@ -71,7 +71,7 @@ function SWEP:PrimaryAttack()
     util.Effect("Sparks", effectdata)
     self.BaseClass.ShootEffects(self)
     if SERVER then
-        self:SetFluke(math.random() < FLUKE_CHANCE:GetFloat())
+        self:SetFluke(math.random() < (FLUKE_CHANCE:GetFloat() / 100))
     end
 
     if SERVER then
@@ -154,8 +154,8 @@ function SWEP:AddToSettingsMenu(parent)
         serverConvar = "ttt_suicide_alt_sfx_chance",
         label = "label_suicide_alt_sfx_chance",
         min = 0,
-        max = 1,
-        decimal = 2
+        max = 100,
+        decimal = 0
     })
 
     local formPaP = vgui.CreateTTT2Form(parent, "label_suicide_pap_form")
