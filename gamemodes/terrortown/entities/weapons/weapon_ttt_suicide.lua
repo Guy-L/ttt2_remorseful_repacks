@@ -126,8 +126,8 @@ function SWEP:Explode()
                 -- to get the right icon as that's what allow explosion
                 -- immunity to catch it
                 ply:TakeDamage(extraDmg, ply, displayCopy)
-                displayCopy:Remove()
             end
+            displayCopy:Remove()
         end)
     end
 
